@@ -1,119 +1,148 @@
-#include"imat.hpp"
-#include<algorithm>
+#pragma once
 
-//#define tmat(M) gmat<float> M(4,4)
+#include <vector>
 
-template<class T>
-class gmat: public imat<T>
+template<class T>//,int R, int C>
+class gmat
 {
 private:
-    /* data */
+    unsigned int r,c;
+    std::vector<std::vector<T>> data;
 public:
-    //CON/DE-STRUCTOR
-    gmat(int i,int j)
-    {
-        this->r=i; 
-        this->c=j;
-        this->mat.resize(i*j);
-        (*this).identity();
-    }
-    gmat(){};
+    gmat(int R, int C): r(R), c(C) 
+    {data.resize(R,std::vector<T>(C,0));}
+    gmat(){}
    ~gmat(){};
+    
+    // ACCESSORs
 
-    T& operator [] (const int i) 
-	{	
-		this->mat[i];
-	}
+    std::vector<T>& operator [] (int i)
+    {return data[i];}
+    const std::vector<T>& operator [] (int i) const
+    {return data[i];}
+    T& operator () (int i, int j)
+    {return data[i][j];}
+    const T& operator () (int i, int j) const
+    {return data[i][j];}
+
+    // GETTERs
+    
+    int getRow()const{return r;}
+    int getCol()const{return c;}
+    int size()const{return r*c;}
+
+    // SETTERs
+
+    void resize(int rr, int cc)
+    {
+        r=rr; 
+        c=cc;
+        data.resize(rr);
+        for(auto& vt:data)
+            vt.resize(cc);
+    }
+    
     // OPERATORs
+    
     gmat<T> operator +(const gmat<T>& M) const
     {
-        gmat<T> ans(this->r,this->c);
-        for (int i = 0; i < this->r*this->c; i++)
-            ans(i)=this->mat[i]+M.mat[i];
-        return ans;
-    }
-    gmat<T> operator -(const gmat<T>& M) const
-    {
-        gmat<T> ans(this->r,this->c);
-        for (int i = 0; i < this->r*this->c; i++)
-            ans(i)=this->mat[i]-M.mat[i];
-        return ans;
-    }
-    gmat operator *(const gmat& M) const
-    {
-        if(this->c==M.r)
-        {
-            int R=this->r,
-                C=M.c;
-            gmat<T> res(this->r,M.c);
-                    res.zero();
+        gmat res(*this);
+
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < c; j++)
+                res(i,j)+=M(i,j);
             
-            for (int i = 0; i < this->r; i++)
-                for (int j = 0; j < M.c; j++)
-                    for (int k = 0; k < this->c; k++)
-                        res(i,j)+=this->mat[i*this->c+k]*M.mat[k*M.c+j];
-
-            return res;
-        } 
-        else {
-            // THROW ERROR
-            gmat<T> res(0,0);
-            return res;
-        }
-    }
-    void operator =(const gmat<T>& M)
-    {
-        this->r=M.r;
-        this->c=M.c;
-        this->resize(this->r*this->c);
-        int j=0;
-        for(auto i:M.mat)
-            this->mat[j++]=i;
-    }
-
-    // Util
-    int size()
-    {
-        return this->r*this->c;   
-    }
-    void resize(int z)
-    {
-        this->mat.resize(z);
-    }
-    void zero()
-	{
-		for(auto& i:this->mat)
-			i=0;
-	}
-	void ones()
-	{
-		for(auto& i:this->mat)
-			i=1;
-	}
-	void identity()
-	{
-		int i = this->r > this->c? this->c:this->r;
-		while(i--) this->mat[i*this->c+i]=1;
-	}
-    gmat<T> transpose()
-    {
-        gmat<T> res(this->c,this->r);
-        for (int i = 0; i < this->c; i++)
-        {
-            for (int j = 0; j < this->r; j++)
-            {
-                res(i,j)=this->mat[j*this->c+i];
-            }
-        }
         return res;
     }
+
+    gmat<T> operator -(const gmat<T>& M) const
+    {
+        gmat res(*this);
+
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < c; j++)
+                res(i,j)-=M(i,j);
+            
+        return res;
+    }
+
+    gmat operator *(const gmat& M) const
+    {
+        if(c!=M.getRow())
+            return *this;
+
+        gmat<T> res(r,M.getCol());
+                
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < M.getCol(); j++)
+                for (int k = 0; k < c; k++)
+                    res(i,j)+=data[i][k]*M(k,j);
+
+        return res;
+    }
+    
+    gmat<T> operator *(const T& n) const
+    {
+        gmat<T> res(*this);
+        
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < c; j++)
+                res(i,j)*=n;
+        
+        return res;
+    }
+
+    void operator =(const gmat& M)
+    {
+        r=M.getRow();
+        c=M.getCol();
+        (*this).resize(M.getRow(),M.getCol());
+        
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < c; j++)
+                data[i][j]=M(i,j);
+    }
+
+    void operator = (const T& n)
+    {
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < c; j++)
+                data[i][j]=n;
+    }
+    // FUNCTIONS
+
+    void fill(T n)
+	{
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < c; j++)
+                data[i][j]=n;
+	}
+	
+	void identity()
+	{
+        (*this).fill(0);
+		int i = r>c ? c:r;
+		while(i--) data[i][i]=1;
+	}
+
+    gmat<T> transpose()
+    {
+        gmat<T> res(c,r);
+
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < c; j++)
+                res(j,i)=data[i][j];
+        
+        return res;
+    }
+
     gmat inverse() const
 	{
-        int n = this->c > this->r? 
-                this->r : this->c;
+        int n = c>r ? r:c;
         
-        gmat<T> M(*this), 
-                I(n,n);
+        gmat M(*this); 
+        gmat I(*this);
+        I.identity();
 
 		float r;
 		int i,j,k;
@@ -123,28 +152,37 @@ public:
 		// Applying Gauss Jordan Elimination
         for(i=0;i<n;i++)
         {
-            for(j=0;j<n;j++) if(j!=i)
-            {
-                r=M(j,i)/M(i,i);
-                for(k=0;k<n;k++)
+            for(j=0;j<n;j++)
+            { 
+                if(j!=i)
                 {
-                    M(j,k)-=M(i,k)*r;
-                    I(j,k)-=I(i,k)*r;
-                }       
+                    r=M(j,i)/M(i,i);
+                    for(k=0;k<n;k++)
+                    {
+                        M(j,k)-=M(i,k)*r;
+                        I(j,k)-=I(i,k)*r;
+                    }       
+                }
             }
         }
-		
+
+		// M -> unity I -> inv
 		for(i=0;i<n;i++)
-        {   // M -> unity I -> inv
+        {   
             r=M(i,i);
             for(j=0;j<n;j++)
             {
-                I(i,j)=I(i,j)/r;
+                I[i][j]=I[i][j]/r;
             }
         }
+
 		return I;
 	}
-
+  
 };
-
-//using tmat = gmat<float>(4,4);
+/*
+using tmat = gmat<float,4,4>;
+using tvec = gmat<float,1,4>;
+using rmat = gmat<float,3,3>;
+using rvec = gmat<float,1,3>;
+*/

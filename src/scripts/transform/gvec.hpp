@@ -1,143 +1,192 @@
 #pragma once
-
+#include <vector>
+#include <cstdlib>
+#include <cstdio>
+#include <iostream>
+#include <iomanip>
 #include "gmat.hpp"
 
-// class gvec a simple 3D gvecor class
 template<class T>
-class gvec: public gmat<T> 
-{ // float: Data Type 
+class gvec
+{
+private:
+    unsigned int r,c;
+    std::vector<T> data;
 public:
-	//CON/DE-STRUCTOR
-    gvec(int j,int i=1)
-    {
-        this->r=i; 
-        this->c=j;
-        this->mat.resize(i*j);
-    }
-    gvec(){};
+    gvec(int R, int C=1): r(R), c(C) 
+    {data.resize(r*c,0);}
+    //gvec(int Z): r(1), c(Z) 
+    //{data.resize(r*c,0);}
+    gvec(){}
    ~gvec(){};
-	
-	// Boolian Operations 
+    
+    // ACCESSORs
 
-	bool operator ==(gvec& vec) 
-	{
-		if(this->size()!= vec.size())
-			return false;
-		for (int i = 0; i < vec.size(); i++)
-			if(vec[i]!=this->mat[i])
-				return false;
-		return true;
-	}
-	bool operator !=(gvec& vec)
-	{
-		if(this->size()!= vec.size())
-			return true;
-		for (int i = 0; i < vec.size(); i++)
-			if(vec[i]!=this->mat[i])
-				return true;
-		return false;
-	}
-	gvec operator *(const gmat<T>& M) const
+    T& operator [] (int i)
+    {return data[i];}
+    const T& operator [] (int i) const
+    {return data[i];}
+    T& operator () (int i, int j)
+    {return data[i*c+j];}
+    const T& operator () (int i, int j) const
+    {return data[i*c+j];}
+
+    // GETTERs
+    
+    int getRow()const{return r;}
+    int getCol()const{return c;}
+    int size()const{return r*c;}
+    
+    // SETTERs
+
+    void resize(int rr, int cc)
     {
-        if(this->c==M.r)
-        {
-            int R=this->r,
-                C=M.c;
-            gvec<T> res(this->c);
-                    res.zero();
-            
-            for (int i = 0; i < this->r; i++)
-                for (int j = 0; j < M.c; j++)
-                    for (int k = 0; k < this->c; k++)
-                        res(i,j)+=this->mat[i*this->c+k]*M.mat[k*M.c+j];
-
-            return res;
-        } 
-        else {
-            // THROW ERROR
-            gvec<T> res(0,0);
-            return res;
-        }
+        r=rr; 
+        c=cc;
+        data.resize(r*c);
     }
-	/*T operator * (gvec<T>& vec)
-	{
-		if(this->size()!= vec.size())
-		{
-			// throw error
-			return -1;
-		}	
-		T res=0;
-		for (int i = 0; i < vec.size(); i++)
-			res+= vec[i]*this->mat[i];
-		return res;
-	}*/
 
-	gvec<T> operator ^(const gvec<T> vec)
+    void resize(int zz)
+    {
+        r=zz; 
+        c=1;
+        data.resize(r*c);
+    }
+    
+    // OPERATORs
+    
+    gvec<T> operator +(const gvec<T>& M) const
+    {
+        gvec res(*this);
+        int i=0;
+        for(T& j:res.data)
+            j+=M[i++];
+
+        return res;
+    }
+
+    gvec<T> operator -(const gvec<T>& M) const
+    {
+        gvec res(*this);
+        int i=0;
+        for(T& j:res.data)
+            j-=M[i++];
+
+        return res;
+    }
+
+    gvec<T> operator -() const
+    {
+        gvec res(*this);
+        for(T& j:res.data)
+            j=-j;
+
+        return res;
+    }
+
+    T operator *(const gvec& M) const
+    {
+        T res=0;
+        int i=M.size();
+        
+        while(i--)
+            res+=data[i]*M[i];
+        
+        return res;
+    }
+    
+    gvec<T> operator *(const gmat<T>& M) const
+    {
+        if(c!=M.getRow())
+            return gvec<T>(0,0);
+
+        gvec<T> res(r,M.getCol());
+                
+        for (int i = 0; i < r; i++)
+            for (int j = 0; j < M.getCol(); j++)
+                for (int k = 0; k < c; k++)
+                    res(i,j)+=data[k]*M(k,j);
+
+        return res;
+    }
+
+    gvec<T> operator *(const T& n) const
+    {
+        gvec res(*this);
+        int i=0;
+        for(T& j:res.data)
+            j*=n;
+
+        return res;
+    }
+
+    void operator *=(T& n)
+    {
+        int i=0;
+        for(T& j:data)
+            j*=n;
+
+    }
+
+    void operator =(const gvec& M)
+    {   
+        r=M.getRow();
+        c=M.getCol();
+        (*this).resize(r,c);
+        
+        int i=0;
+        for(T& j:data)
+            j=M[i++];
+    }
+
+    void operator = (const T& n)
+    {
+        for(T& j:data)
+            j=n;
+    }
+    // FUNCTIONS
+
+    gvec<T> transpose()
+    {
+        gvec<T> res(c,r);
+
+        int i=0;
+        for(T& j:res.data)
+            j=data[i++];
+       
+        return res;
+    }
+    
+    T norm()
 	{
-		if(this->size()!= vec.size())
-		{
-			// throw error
-			gvec<T> res(0);
-			return res;
-		}
-		gvec<T> res(vec.size());
-		for (int i = 0; i < vec.size(); i++)
-		{
-			for (int j = 0; j < vec.size(); j++)
-			{
-				res[i]+=this->mat[i];
-			}
-		}
+		T res=0;
+		for(T i:data)
+			res+=i*i;
+	}
+
+	void normalize() 
+    { 
+        T n = norm(); 
+        if (n > 0) { 
+            T factor = 1 / sqrt(n);
+			for(auto& i:data)
+				i*=factor;
+        } 
+        //return *this; 
+    } 
+
+    gvec<T> cross (gvec<T> v) const
+    { 	//y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x
+		gvec<T> res(r*c);
+		res[0]= data[1] * v[2] - data[2] * v[1];
+		res[1]= data[2] * v[0] - data[0] * v[2];
+		res[2]= data[0] * v[1] - data[1] * v[0];
+		res[3]= 0;
 		return res;
 	}
-	// Set the gvecor to zero
-	
-	// Unary minus returns the negative of the gvecor
-	/*gvec<T> operator -() const
-	{
-		gvec<T> res(this->size()) 
-	}*/
+
+    friend std::ostream& operator << (std::ostream &s, const gvec<T> &v)
+    {   
+        return s << '[' << v[0] << ' ' << v[1] << ' ' << v[2] << ']';
+    }
 };
-
-	/*
-	// Binary + and - add and subtract gvecors
-	gvec operator +(const gvec& a) const;
-	gvec operator -(const gvec& a) const;
-	// Multiplication and division by scalar
-	gvec operator *(float a) const;
-	gvec operator /(float a) const;
-
-	// Assignment operations 
-	gvec& operator = (const gvec& a);
-	gvec& operator +=(const gvec& a);
-	gvec& operator -=(const gvec& a);
-	gvec& operator *=(float a);
-	gvec& operator /=(float a);
-
-	// normalize the gvecor 
-	void normalize();
-	// rotate around it
-	void rotate(gvec& v){}
-	// gvecor dot product 
-	float operator *(const gvec& a) const;
-};
- 
-/* * * * * * * * * * * * 
- * Nonmember functions *
- * * * * * * * * * * * */
-/*
-// Compute the magnitude of a gvecor gvecorMag
-extern float norm(const gvec& a);
-// Compute the cross product of two gvecors
-extern gvec cross(const gvec& a, const gvec& b);
-// Scalar on the left multiplication, for symmetry
-extern gvec operator *(float k, const gvec& v);
-// Compute the distance between two points
-extern float dist(const gvec& a, const gvec& b);
-
-//Global variables
-
-
- // We provide a global zero gvecor constant
-extern const gvec kZerogvecor;
-*/

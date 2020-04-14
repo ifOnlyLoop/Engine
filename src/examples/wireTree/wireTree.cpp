@@ -1,6 +1,6 @@
 //#include "gmat.hpp"
-#include "src/scripts/transform/gvec.hpp"
-//#include "src/scripts/transform/tmat.hpp"
+#include "/home/oo/iOL/Engine/src/scripts/transform/gvec.hpp"
+//#include "/home/oo/iOL/Engine/src/scripts/transform/gmat.hpp"
 
 #include <bits/stdc++.h>
 
@@ -37,14 +37,13 @@ void computePixelCoordinates (
 int main()
 {
 
-    #ifndef ONLINE_JUDGE
-        freopen("/home/oo/iOL/Engine/src/examples/wireTree.in", "r", stdin);
-        //freopen("res.svg", "w", stdout);
-    #endif
+
+        freopen("wireTree.in", "r", stdin);
+
 
     std::ofstream ofs; 
 
-    ofs.open("./proj.svg"); 
+    ofs.open("./wireTree.svg"); 
     ofs << "<svg version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns=\"http://www.w3.org/2000/svg\" height=\"512\" width=\"512\">" << std::endl;     
     
     int n; 
