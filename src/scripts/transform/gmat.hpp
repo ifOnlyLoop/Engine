@@ -6,9 +6,14 @@ template<class T>//,int R, int C>
 class gmat
 {
 private:
+
+    // Data Member
     unsigned int r,c;
     std::vector<std::vector<T>> data;
+
 public:
+
+    // Constructors
     gmat(int R, int C): r(R), c(C) 
     {data.resize(R,std::vector<T>(C,0));}
     gmat(){}
@@ -180,7 +185,8 @@ public:
 	}
   
 };
-/*
+
+/* ONE DAY
 using tmat = gmat<float,4,4>;
 using tvec = gmat<float,1,4>;
 using rmat = gmat<float,3,3>;

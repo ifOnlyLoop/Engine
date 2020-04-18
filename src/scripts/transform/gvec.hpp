@@ -10,13 +10,18 @@ template<class T>
 class gvec
 {
 private:
+
+    // Data Members
+
     unsigned int r,c;
     std::vector<T> data;
+    
 public:
+
+    // Constructors
+    
     gvec(int R, int C=1): r(R), c(C) 
     {data.resize(r*c,0);}
-    //gvec(int Z): r(1), c(Z) 
-    //{data.resize(r*c,0);}
     gvec(){}
    ~gvec(){};
     
@@ -83,7 +88,7 @@ public:
 
         return res;
     }
-
+    // Dot Product
     T operator *(const gvec& M) const
     {
         T res=0;
@@ -94,7 +99,7 @@ public:
         
         return res;
     }
-    
+    // Matrix Multi
     gvec<T> operator *(const gmat<T>& M) const
     {
         if(c!=M.getRow())
@@ -106,7 +111,7 @@ public:
             for (int j = 0; j < M.getCol(); j++)
                 for (int k = 0; k < c; k++)
                     res(i,j)+=data[k]*M(k,j);
-
+                    
         return res;
     }
 
@@ -174,7 +179,7 @@ public:
         } 
         //return *this; 
     } 
-
+    // TODO : replace with operator (^) and Generic code vecOfSize(n)
     gvec<T> cross (gvec<T> v) const
     { 	//y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x
 		gvec<T> res(r*c);
