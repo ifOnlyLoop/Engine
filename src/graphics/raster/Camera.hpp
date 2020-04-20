@@ -46,7 +46,7 @@ public:
      * SCREEN SPECs
      * Compute vertex raster screen coordinates
      */    
-    void getRaster ( 
+    bool getRaster ( 
         const gmat<float> &worldToCamera,
         const gvec<float> &pWorld, 
         gvec<float> &pRaster
@@ -94,7 +94,7 @@ void Camera::setImage(uint32_t W,uint32_t H)
  * SCREEN SPECs
  * Compute vertex raster screen coordinates
  */        
-void Camera::getRaster ( 
+bool Camera::getRaster ( 
     const gmat<float> &worldToCamera,
     const gvec<float> &pWorld, 
     gvec<float> &projectedVert
@@ -104,10 +104,17 @@ void Camera::getRaster (
     if(projectedVert[3]!=1)
     for (int i=0;i<4;i++)
     projectedVert[i]/=projectedVert[3];
-    
+    /*
+    if (projectedVert[0] < -1 || 
+        projectedVert[0] >  1 || 
+        projectedVert[1] < -1 || 
+        projectedVert[1] >  1
+    )   return false; // not in canvas
+    */
     projectedVert[0] = std::min(imageWidth  - 1, (uint32_t)(     (projectedVert[0] + 1) * 0.5  * imageWidth ));
     projectedVert[1] = std::min(imageHeight - 1, (uint32_t)((1 - (projectedVert[1] + 1) * 0.5) * imageHeight));      
     projectedVert[2] = 1 / projectedVert[2];
+    return true;
 } 
 
 // set OpenGL limits matrix
