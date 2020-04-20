@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+src/examples/BWcow/BWcow
+src/examples/BWcow/BWcow.cpp
+src/examples/BWcow/output.ppm
+src/examples/ProjMatrix/out.jpg
+src/examples/ProjMatrix/out.ppm
+src/examples/ProjMatrix/ProjMatrix
+src/examples/ProjMatrix/ProjMatrix.cpp
+src/examples/ProjMatrix/ProjMatrix.in
+src/examples/BWcow/output.ppm
