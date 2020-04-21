@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     cam.setFilm(filmApertureWidth,filmApertureWidth);
     //cam.setScreen();
     cam.gluPerspective (
-        90,
+        100,
         obj.zmin,
         obj.zmax
     );
@@ -89,17 +89,17 @@ int main(int argc, char **argv)
         gvec<float> v0Raster(1,4), 
                     v1Raster(1,4), 
                     v2Raster(1,4); 
-       
-        cam.getRaster(world2camera,v0, v0Raster); // res: vector, size: 1x4
-        cam.getRaster(world2camera,v1, v1Raster); 
-        cam.getRaster(world2camera,v2, v2Raster); 
-
-        gvec<float> st0(1,4);//stn[txtris[i][0]];
-        st0 = 150;
-        gvec<float> st1(1,4);//stn[txtris[i][1]];
-        st1 = 200;
-        gvec<float> st2(1,4);//stn[txtris[i][2]];
-        st2 = 250;
+        
+        bool withinScreen = true;
+        withinScreen&=cam.getRaster(world2camera,v0, v0Raster); // res: vector, size: 1x4
+        withinScreen&=cam.getRaster(world2camera,v1, v1Raster); 
+        withinScreen&=cam.getRaster(world2camera,v2, v2Raster); 
+        if(withinScreen==0)continue;
+        
+        gvec<float> st0=obj.objData.vertexList[obj.objData.faceList[i][0]].texture;//stn[txtris[i][0]];
+        gvec<float> st1=obj.objData.vertexList[obj.objData.faceList[i][1]].texture;//stn[txtris[i][1]];
+        gvec<float> st2=obj.objData.vertexList[obj.objData.faceList[i][2]].texture;//stn[txtris[i][2]];
+        
  
         st0 *= v0Raster[2], st1 *= v1Raster[2], st2 *= v2Raster[2]; 
  

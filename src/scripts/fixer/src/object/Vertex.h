@@ -13,13 +13,14 @@ public:
 		return location[i];
 	}
 
-	gvec<float> normal,location;
+	gvec<float> normal,location,texture;
 	
 	int NORMAL_INDEX;
 	int LOCATION_INDEX;
 	
 	void pushLocation(float,float,float,float);
 	void pushNormal(float,float,float,float);
+	void pushTexture(float,float,float);
 private:
 	//std::vector<vect> vertex;
 };
@@ -27,6 +28,7 @@ private:
 Vertex::Vertex()
 {
 	location.resize(1,4);
+	texture.resize(1,3);
 	normal.resize(1,4);
 }
 
@@ -47,4 +49,11 @@ void Vertex::pushNormal(float x,float y,float z, float w=0)
 	normal[1]=y;
 	normal[2]=z;
 	normal[3]=w;
+}
+
+void Vertex::pushTexture(float u,float v, float w=0)
+{
+ 	texture[0]=u;
+	texture[1]=v;
+	texture[2]=w;
 }

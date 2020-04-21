@@ -12,6 +12,7 @@
 #include"Vertex.h"
 #include"Face.h"
 #include"ObjData.h"
+#include"../../../graphics/image/Texture.hpp"
 
 class handleObject
 {
@@ -23,17 +24,16 @@ private:
 		IMPORT_PATH,
 		// Path of .obj Export File
 		EXPORT_PATH,
+		// Path of .bmp Texture File
+		TEXTURE_PATH,
 		// Geometric Element
 		ELEMENT;
-	char * 
-		// c String Version
-		ELEMENT_C_STRING;
-
+	
 	
 	/*
 	 * START OF Temp DATA 
 	 */
-	
+	Texture texture;
 	Vertex  // Vertex Dummy Info for String Streaming
 		tempVertex;
 	Face
@@ -55,17 +55,19 @@ private:
 	std::ofstream objEXPORT;
 	
 	// PRIVATE MEMBER FUNCTIONS //
-
+	vector<char> textureData;
 	// Read From .obj Data
 	void read();
 	// Write to .obj Data
 	void write();
 	// Handle Vertex
-	void handleVertex(bool);
+	void handleVertex(uint8_t);
 	// Handle Face
 	void handleFace();
 	// split face's normal and vertex index
 	void objElementSplit(std::string&);
+	// load texture map
+	void loadTextureMap(const std::string &file);
 
 public:
 	// Constrtuctor //
@@ -76,6 +78,7 @@ public:
 	// PUBLIC MEMBER FUNCTIONS //
 	void IMPORT(std::string);
 	void EXPORT(std::string);
+	void LOADTX(std::string);
 	void ROTATE(float, float, float);
 	// PUBLIC MEMBER DATATYPES //
 	std::vector<Vertex> vertexList;
@@ -111,7 +114,6 @@ handleObject::handleObject(std::string filePath)
 	zmax=INT32_MIN;
     
 	ELEMENT = "";
-    ELEMENT_C_STRING = NULL;
     x = y = z = 0.0f;
     u = 0.2f; 
     v = 0.7f;
@@ -154,13 +156,15 @@ void handleObject::read()
             handleVertex(1);
         if (dataType == "vn")
             handleVertex(0);
+		if (dataType == "vt")
+		    handleVertex(2);
         if (dataType == "f")
             handleFace();
         // Clear Buffer
         info.clear();
     }
 	// all normals are linked 
-	objData.clearTempNormal();
+	objData.clearTempData();
 }
 
 void handleObject::objElementSplit(std::string& s)
@@ -169,28 +173,34 @@ void handleObject::objElementSplit(std::string& s)
         if (c == '/') c = ' ';
 }
 
-void handleObject::handleVertex(bool isLocation=0)
-{
-    // Get Vertex Postion
-    info >> x >> y >> z;
+void handleObject::handleVertex(uint8_t vertexDataType=0)
+{	// vertexDataType 1:location 0:normal 2:texture
+    
+	// Get Vertex Postion (debug for type 2)
+	info >> x >> y >> z;
 	float xx=stof(x), yy=stof(y), zz=stof(z);
 
+	if(vertexDataType==1){
 	xmin=std::min(xmin,xx);	xmax=std::max(xmax,xx);
 	ymin=std::min(ymin,yy);	ymax=std::max(ymax,yy);
-	zmin=std::min(zmin,zz);	zmax=std::max(zmax,zz);
+	zmin=std::min(zmin,zz);	zmax=std::max(zmax,zz);}
 
     // String to Float
-	if(isLocation)
+	if(vertexDataType==1)
 	{	// Push the Postion
 		tempVertex.pushLocation(xx,yy,zz);
         objData.vertexList.push_back(tempVertex);
-	}
-    else
+	}	else
+	if(vertexDataType==0)
 	{	// temp storage until normals are linked to vertex
 		objData.pushTempNormal(xx,yy,zz);
+	}	else
+	if(vertexDataType==2)
+	{
+		objData.pushTempTexture(xx,yy);
 	}
     // Clear Buffer for Next Reading
-    info.clear();
+    info.clear(); // maybe you should put it after read in import ? 
 }
 //
 void handleObject::handleFace()
@@ -204,10 +214,10 @@ void handleObject::handleFace()
     while (info >> vertexIndex >> textureIndex >>normalIndex)
     {
 		vidx=stoi(vertexIndex) -1;
-		nidx=stoi(normalIndex) -1;
 		tidx=stoi(textureIndex)-1;
-		// Link point with its normal
-		//objData.link(vidx,nidx);
+		nidx=stoi(normalIndex) -1;
+		// Link point with normal/texture
+		objData.link(vidx,tidx,nidx);
 		// add vertex index to face (tri face!)
 		tempFace[i++]=vidx; 
     }
@@ -237,20 +247,16 @@ void handleObject::write()
 {	// points
     for (auto p : objData.vertexList)
     {
-        objEXPORT << "v " << p.location[0] << " " << p.location[1] << " " << p.location[2] << std::endl;
-    }
-	// normals
-    for (auto n : objData.vertexList)
-    {
-        //objEXPORT << "vn\t"<< n.normal[0] << "\t" << n.normal[1] << "\t" << n.normal[2] << std::endl;
-    }
+        objEXPORT << "v\t"   << p.location[0] << " " << p.location[1] << " " << p.location[2] << std::endl;
+		objEXPORT << "vn\t " << p.normal[0]   << " " << p.normal[1]   << " " << p.normal[2]   << std::endl;
+		objEXPORT << "vt\t " << p.texture[0]  << " " << p.texture[1]   << std::endl;
+	}
 	// face
     for (auto f : objData.faceList)
     {
-		objEXPORT << "f "  << f[0]+1 /*<< "//" << f[0]+1*/ << " "
-				  		   << f[1]+1 /*<< "//" << f[1]+1*/ << " "
-				           << f[2]+1 /*<< "//" << f[2]+1*/ << std::endl;
-				  
+		objEXPORT << "f\t" << f[0]+1 << '/' << f[0]+1 << '/' << f[0]+1  << "\t"
+				  		   << f[1]+1 << '/' << f[1]+1 << '/' << f[1]+1  << "\t"
+				           << f[2]+1 << '/' << f[2]+1 << '/' << f[2]+1  << std::endl;			  
     }
 }
 
