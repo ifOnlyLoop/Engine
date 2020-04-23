@@ -12,8 +12,6 @@
 #include"Vertex.h"
 #include"Face.h"
 #include"ObjData.h"
-#include"../../../graphics/image/Texture.hpp"
-
 class handleObject
 {
 private:
@@ -33,7 +31,6 @@ private:
 	/*
 	 * START OF Temp DATA 
 	 */
-	Texture texture;
 	Vertex  // Vertex Dummy Info for String Streaming
 		tempVertex;
 	Face
@@ -55,19 +52,18 @@ private:
 	std::ofstream objEXPORT;
 	
 	// PRIVATE MEMBER FUNCTIONS //
-	vector<char> textureData;
 	// Read From .obj Data
 	void read();
 	// Write to .obj Data
 	void write();
 	// Handle Vertex
-	void handleVertex(uint8_t);
+	void handleVertex(bool);
+	//
+	void handleTexture();
 	// Handle Face
 	void handleFace();
 	// split face's normal and vertex index
 	void objElementSplit(std::string&);
-	// load texture map
-	void loadTextureMap(const std::string &file);
 
 public:
 	// Constrtuctor //
@@ -78,7 +74,6 @@ public:
 	// PUBLIC MEMBER FUNCTIONS //
 	void IMPORT(std::string);
 	void EXPORT(std::string);
-	void LOADTX(std::string);
 	void ROTATE(float, float, float);
 	// PUBLIC MEMBER DATATYPES //
 	std::vector<Vertex> vertexList;
@@ -104,7 +99,7 @@ handleObject::handleObject()
 {
 }
 
-handleObject::handleObject(std::string filePath)
+handleObject::handleObject(std::string objFilePath)
 {
 	xmin=INT32_MAX,
 	xmax=INT32_MIN,
@@ -117,7 +112,10 @@ handleObject::handleObject(std::string filePath)
     x = y = z = 0.0f;
     u = 0.2f; 
     v = 0.7f;
-    IMPORT(filePath);
+	
+	//objData.texture.read(txtFilePath);
+	//objData.texture.read (const_cast<char*>(txtFilePath.c_str())//,//objData.tempTextureList);
+    IMPORT(objFilePath);
 }
 handleObject::~handleObject()
 {
@@ -157,7 +155,7 @@ void handleObject::read()
         if (dataType == "vn")
             handleVertex(0);
 		if (dataType == "vt")
-		    handleVertex(2);
+		    handleTexture();
         if (dataType == "f")
             handleFace();
         // Clear Buffer
@@ -173,34 +171,39 @@ void handleObject::objElementSplit(std::string& s)
         if (c == '/') c = ' ';
 }
 
-void handleObject::handleVertex(uint8_t vertexDataType=0)
+void handleObject::handleVertex(bool islocation=0)
 {	// vertexDataType 1:location 0:normal 2:texture
     
 	// Get Vertex Postion (debug for type 2)
 	info >> x >> y >> z;
 	float xx=stof(x), yy=stof(y), zz=stof(z);
 
-	if(vertexDataType==1){
+	if(islocation){
 	xmin=std::min(xmin,xx);	xmax=std::max(xmax,xx);
 	ymin=std::min(ymin,yy);	ymax=std::max(ymax,yy);
 	zmin=std::min(zmin,zz);	zmax=std::max(zmax,zz);}
 
     // String to Float
-	if(vertexDataType==1)
-	{	// Push the Postion
+	if(islocation) {
+ 		// Push the Postion
 		tempVertex.pushLocation(xx,yy,zz);
-        objData.vertexList.push_back(tempVertex);
-	}	else
-	if(vertexDataType==0)
-	{	// temp storage until normals are linked to vertex
+		objData.vertexList.push_back(tempVertex);
+	}	
+	else
+		// temp storage until normals are linked to vertex
 		objData.pushTempNormal(xx,yy,zz);
-	}	else
-	if(vertexDataType==2)
-	{
-		objData.pushTempTexture(xx,yy);
-	}
+
     // Clear Buffer for Next Reading
     info.clear(); // maybe you should put it after read in import ? 
+}
+
+void handleObject::handleTexture()
+{
+	info >> x >> y;// >> z;
+	float u=stof(x), v=stof(y);//, zz=stof(z);
+	// Clear Buffer for Next Reading
+    objData.pushTempTexture(u,v);
+	info.clear(); // maybe you should put it after read in import ? 
 }
 //
 void handleObject::handleFace()

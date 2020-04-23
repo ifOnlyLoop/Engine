@@ -10,6 +10,7 @@
 #include "../../scripts/transform/gmat.hpp"
 #include "../../graphics/raster/Camera.hpp"
 #include "./src/object/handleObject.h"
+#include"../../graphics/image/Texture.hpp"
 
 using namespace std;
 
@@ -21,7 +22,7 @@ float edgeFunction(gvec<float> &a, gvec<float> &b, gvec<float> &c)
     return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0]); 
 }
 
-int fact=4;
+int fact=1;
 const float 
 nearClippingPLane = 1,
 farClippingPLane  = 1000; 
@@ -38,7 +39,8 @@ imageHeight = 512*fact;
 int main(int argc, char **argv)
 {   
     
-    handleObject obj("/home/oo/iOL/Engine/src/scripts/fixer/src/object/input.obj");
+    //Texture texture ("/home/oo/iOL/Engine/src/scripts/fixer/src/object/tests/test00.bmp");
+    handleObject obj ("/home/oo/iOL/Engine/src/scripts/fixer/src/object/tests/test2.obj");
 
     // SET CAMERA TRANSFORM IN FRONT OF OBJECT 
     float 
@@ -63,7 +65,7 @@ int main(int argc, char **argv)
     cam.setFilm(filmApertureWidth,filmApertureWidth);
     //cam.setScreen();
     cam.gluPerspective (
-        100,
+        90,
         obj.zmin,
         obj.zmax
     );
@@ -118,6 +120,7 @@ int main(int argc, char **argv)
         
         // tri area
         float area = edgeFunction(v0Raster, v1Raster, v2Raster); 
+        area=fabs(area);
         // ROTATE PIXELS TO COLOR (SIMPLE APPROACH)
         for (uint32_t y = y0; y <= y1; ++y) 
         for (uint32_t x = x0; x <= x1; ++x) 
@@ -147,8 +150,11 @@ int main(int argc, char **argv)
             depthBuffer[y * imageWidth + x] = z;
             // set new color 
             gvec<float> st = st0 * w0 + st1 * w1 + st2 * w2; 
+            
             // ?
-            st *= z; 
+            st *= z;
+            //float R=st[0],B=st[1],G=150;
+            //texture.getColor(R,G,B); 
             // transform original to camera (NO PROJECTION)
             gvec<float> v0Cam(v0*world2camera), 
                         v1Cam(v1*world2camera), 
@@ -173,9 +179,9 @@ int main(int argc, char **argv)
             float c = 0.3 * (1 - checker) + 0.7 * checker; 
             nDotView *= c; 
             
-            frameBuffer[y * imageWidth + x].x = nDotView * 255; 
-            frameBuffer[y * imageWidth + x].y = nDotView * 255; 
-            frameBuffer[y * imageWidth + x].z = nDotView * 255;  
+            frameBuffer[y * imageWidth + x].x = nDotView * 255;//B 
+            frameBuffer[y * imageWidth + x].y = nDotView * 255;//G 
+            frameBuffer[y * imageWidth + x].z = nDotView * 255;//R  
             //}}
         } 
     }

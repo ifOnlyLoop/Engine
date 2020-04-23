@@ -6,7 +6,9 @@
 *.lo
 *.o
 *.obj
-
+*.bmp
+*.jpg
+*.ppm
 # Precompiled Headers
 *.gch
 *.pch
@@ -39,3 +41,4 @@ src/examples/ProjMatrix/ProjMatrix
 src/examples/ProjMatrix/ProjMatrix.cpp
 src/examples/ProjMatrix/ProjMatrix.in
 src/examples/BWcow/output.ppm
+src/scripts/fixer/src/object/tests/test0.bmp
