@@ -10,19 +10,19 @@
 #include "../../scripts/transform/gmat.hpp"
 #include "../../graphics/raster/Camera.hpp"
 #include "./src/object/handleObject.h"
-#include"../../graphics/image/Texture.hpp"
+#include "../../graphics/image/Texture.hpp"
 
 using namespace std;
 
 #define min3(a,b,c) min(a,min(b, c))
 #define max3(a,b,c) max(a,max(b, c))
-
+#define getTime(A)  
 float edgeFunction(gvec<float> &a, gvec<float> &b, gvec<float> &c) 
 { 
     return (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0]); 
 }
 
-int fact=1;
+int fact=2;
 const float 
 nearClippingPLane = 1,
 farClippingPLane  = 1000; 
@@ -39,8 +39,8 @@ imageHeight = 512*fact;
 int main(int argc, char **argv)
 {   
     
-    //Texture texture ("/home/oo/iOL/Engine/src/scripts/fixer/src/object/tests/test00.bmp");
-    handleObject obj ("/home/oo/iOL/Engine/src/scripts/fixer/src/object/tests/test2.obj");
+    Texture  texture ("/home/oo/iOL/Engine/src/scripts/fixer/tests/test0.bmp");
+    handleObject obj ("/home/oo/iOL/Engine/src/scripts/fixer/tests/test0.obj");
 
     // SET CAMERA TRANSFORM IN FRONT OF OBJECT 
     float 
@@ -153,8 +153,10 @@ int main(int argc, char **argv)
             
             // ?
             st *= z;
-            //float R=st[0],B=st[1],G=150;
-            //texture.getColor(R,G,B); 
+            
+            float R=st[0],B=st[1],G=150;
+            texture.getColor(R,G,B); 
+            
             // transform original to camera (NO PROJECTION)
             gvec<float> v0Cam(v0*world2camera), 
                         v1Cam(v1*world2camera), 
@@ -173,22 +175,22 @@ int main(int argc, char **argv)
             gvec<float> viewDirection(-pt); viewDirection.normalize(); 
             float test = N*viewDirection;
             float nDotView =  std::max(0.f, test);//(N*viewDirection.transpose())[0]); 
-
+            // ??
             const int M = 10; // ??
             float checker = (fmod(st[0] * M, 1.0) > 0.5) ^ (fmod(st[1] * M, 1.0) < 0.5); 
             float c = 0.3 * (1 - checker) + 0.7 * checker; 
             nDotView *= c; 
             
-            frameBuffer[y * imageWidth + x].x = nDotView * 255;//B 
-            frameBuffer[y * imageWidth + x].y = nDotView * 255;//G 
-            frameBuffer[y * imageWidth + x].z = nDotView * 255;//R  
+            frameBuffer[y * imageWidth + x].x =  B;//nDotView *255; 
+            frameBuffer[y * imageWidth + x].y =  G;//nDotView *255; 
+            frameBuffer[y * imageWidth + x].z =  R;//nDotView *255;  
             //}}
         } 
     }
 
     // print image
     std::ofstream ofs; 
-    ofs.open("./mainppm.ppm"); 
+    ofs.open("/home/oo/iOL/Engine/src/scripts/fixer/tests/mainppm.ppm"); 
     ofs << "P6\n" << imageWidth << " " << imageHeight << "\n255\n";
     ofs.write(reinterpret_cast<char*>(&frameBuffer[0]), imageWidth * imageWidth*3);
 
@@ -202,11 +204,11 @@ int main(int argc, char **argv)
     delete [] frameBuffer; 
     delete [] depthBuffer; 
 
-    obj.EXPORT("mainobj.obj");
+    obj.EXPORT("/home/oo/iOL/Engine/src/scripts/fixer/tests/mainobj.obj");
     return 0;
 }
 
-
+    // print points only
     /*
     unsigned char *buffer = new unsigned char[imageWidth * imageHeight];
     memset(buffer, 0x0, imageWidth * imageHeight);

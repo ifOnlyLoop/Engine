@@ -127,11 +127,10 @@ void Texture::read(char* filename)
         fread(data, 1, row_padded, f);
         for(int j=0;j<width*3;j+=3)
         {   
-            tmp = data[j]&0xff;
             // Convert (B, G, R) to (R, G, B)
-            RASTER_DATA.push_back(tmp);//&0xff);
-            RASTER_DATA.push_back(tmp);//&0xff);
-            RASTER_DATA.push_back(tmp);//&0xff);
+            RASTER_DATA.push_back(data[j+2]&0xff);//&0xff);
+            RASTER_DATA.push_back(data[j+1]&0xff);//&0xff);
+            RASTER_DATA.push_back(data[j+0]&0xff);//&0xff);
             //std::cout<<(int)tmp<<' ';
             //std::cout << "R: " << int(data[i] & 0xff) << " G: " << int(data[i+1] & 0xff) << " B: " << int(data[i+2] & 0xff) << std::endl;
         }//
