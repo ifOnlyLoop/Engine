@@ -121,7 +121,8 @@ int main(int argc, char **argv)
         // tri area
         float area = edgeFunction(v0Raster, v1Raster, v2Raster); 
         area=fabs(area);
-        // ROTATE PIXELS TO COLOR (SIMPLE APPROACH)
+        // ROTATE PIXELS TO COLOR (SIMPLE APPROACH) 
+        // TODO: use intervals instead !
         for (uint32_t y = y0; y <= y1; ++y) 
         for (uint32_t x = x0; x <= x1; ++x) 
         { 
@@ -154,7 +155,7 @@ int main(int argc, char **argv)
             // ?
             st *= z;
             
-            float R=st[0],B=st[1],G=150;
+            float R=st[0],B=st[1],G=0;
             texture.getColor(R,G,B); 
             
             // transform original to camera (NO PROJECTION)
@@ -175,15 +176,15 @@ int main(int argc, char **argv)
             gvec<float> viewDirection(-pt); viewDirection.normalize(); 
             float test = N*viewDirection;
             float nDotView =  std::max(0.f, test);//(N*viewDirection.transpose())[0]); 
-            // ??
-            const int M = 10; // ??
+            // square texture 
+            const int M = 5; // grids
             float checker = (fmod(st[0] * M, 1.0) > 0.5) ^ (fmod(st[1] * M, 1.0) < 0.5); 
             float c = 0.3 * (1 - checker) + 0.7 * checker; 
             nDotView *= c; 
             
-            frameBuffer[y * imageWidth + x].x =  B;//nDotView *255; 
-            frameBuffer[y * imageWidth + x].y =  G;//nDotView *255; 
-            frameBuffer[y * imageWidth + x].z =  R;//nDotView *255;  
+            frameBuffer[y * imageWidth + x].x = nDotView *200;//R; 
+            frameBuffer[y * imageWidth + x].y = nDotView *200;//G; 
+            frameBuffer[y * imageWidth + x].z = nDotView *200;//B;  
             //}}
         } 
     }

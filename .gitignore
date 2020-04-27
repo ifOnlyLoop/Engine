@@ -42,3 +42,4 @@ src/examples/ProjMatrix/ProjMatrix.cpp
 src/examples/ProjMatrix/ProjMatrix.in
 src/examples/BWcow/output.ppm
 src/scripts/fixer/src/object/tests/test0.bmp
+src/graphics/ray/cow.geo

@@ -131,6 +131,8 @@ void handleObject::IMPORT(std::string filePath)
 	obj.open(IMPORT_PATH);
 	// Read Data
 	read();
+	std::cerr<<objData.vertexList.size()<<std::endl;
+	std::cerr<<objData.faceList.size()<<std::endl;
 	// Close File
 	obj.close();
 }
@@ -249,18 +251,20 @@ void handleObject::EXPORT(std::string filePath)
 void handleObject::write()
 {	// points
     for (auto p : objData.vertexList)
-    {
-        objEXPORT << "v\t"   << p.location[0] << " " << p.location[1] << " " << p.location[2] << std::endl;
-		objEXPORT << "vn\t " << p.normal[0]   << " " << p.normal[1]   << " " << p.normal[2]   << std::endl;
-		objEXPORT << "vt\t " << p.texture[0]  << " " << p.texture[1]   << std::endl;
-	}
+    {	
+        objEXPORT << "v\t"   << p.location[0]  << "\t" << p.location[1]  << "\t" << p.location[2] << std::endl;
+		objEXPORT << "vn\t"  << p.normal[0]    << "\t" << p.normal[1]    << "\t" << p.normal[2]   << std::endl;
+		objEXPORT << "vt\t"  << p.texture[0]   << "\t" << p.texture[1]   <<std::endl;
+	}	std::cerr<<objData.vertexList.size()<<std::endl;
 	// face
+	
     for (auto f : objData.faceList)
     {
 		objEXPORT << "f\t" << f[0]+1 << '/' << f[0]+1 << '/' << f[0]+1  << "\t"
 				  		   << f[1]+1 << '/' << f[1]+1 << '/' << f[1]+1  << "\t"
-				           << f[2]+1 << '/' << f[2]+1 << '/' << f[2]+1  << std::endl;			  
-    }
+				           << f[2]+1 << '/' << f[2]+1 << '/' << f[2]+1         
+						   << std::endl;			  
+    }	std::cerr<<objData.faceList.size()<<std::endl;
 }
 
 
