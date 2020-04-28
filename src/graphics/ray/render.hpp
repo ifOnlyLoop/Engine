@@ -14,7 +14,8 @@
 #include <string>
 
 //#include "geometry.h"
-#include "Object.hpp"
+#include "../../object/Object.h"
+#include "../../scripts/transform/gvec.hpp"
 // constants
 
 //static const float kInfinity = std::numeric_limits<float>::max();
@@ -22,6 +23,8 @@
 //static const Vec3f kDefaultBackgroundColor = Vec3f(0,0,0);
 
 // external functions
+
+struct buff{ float x = 0, y = 0, z = 0; };
 
 inline
 float clamp (
@@ -43,23 +46,25 @@ float deg2rad (const float &deg)
 
 struct Options
 {
-    uint32_t width  = 640;
-    uint32_t height = 480;
+    uint32_t width  = 100;//640;
+    uint32_t height = 100;//480;
     float fov = 15;
-    Vec3f backgroundColor = kDefaultBackgroundColor;
-    Matrix44f cameraToWorld;
+    gvec<float> backgroundColor = kDefaultBackgroundColor;
+    gmat<float> cameraToWorld;
+    //Matrix44f cameraToWorld;
 };
 
 // 
 bool trace (
-    const Vec3f &orig,  // ray 
-    const Vec3f &dir,   // ray
+    const gvec<float> &orig,  // ray 
+    const gvec<float> &dir,   // ray
     const std::vector<std::unique_ptr<Object>> &objects, //objs
     float &tNear,       // depth buffer
-    uint32_t &index,    //
-    Vec2f &uv,          // texturing
+    uint32_t &index,    // intersected triangle index
+    gvec<float> &uv,    // texturing
     Object **hitObject  // intersected obj
 ) {
+    // intersected object
     *hitObject = nullptr;
     
     for (uint32_t k = 0; k < objects.size(); ++k) 
@@ -67,9 +72,12 @@ bool trace (
         float tNearTriangle = kInfinity;
         
         uint32_t indexTriangle;
-        Vec2f    uvTriangle;
+        gvec<float> uvTriangle(3);
         
-        if (objects[k]->intersect(orig, dir, tNearTriangle, indexTriangle, uvTriangle) && tNearTriangle < tNear) {
+        if (
+            objects[k]->intersect(orig, dir, tNearTriangle, indexTriangle, uvTriangle)
+            && tNearTriangle < tNear
+        ) {
             *hitObject = objects[k].get();
             tNear = tNearTriangle;
             index = indexTriangle;
@@ -80,30 +88,46 @@ bool trace (
     return (*hitObject != nullptr);
 }
  
-Vec3f castRay(
-    const Vec3f &orig, const Vec3f &dir,
+buff castRay (
+    const gvec<float> &orig, 
+    const gvec<float> &dir,
     const std::vector<std::unique_ptr<Object>> &objects,
-    const Options &options)
-{
-    Vec3f hitColor = options.backgroundColor;
+    const Options &options
+) {
+    gvec<float> hitColor = options.backgroundColor;
     float tnear = kInfinity;
-    Vec2f uv;
+    gvec<float> uv(3);
     uint32_t index = 0;
     Object *hitObject = nullptr;
-    if (trace(orig, dir, objects, tnear, index, uv, &hitObject)) {
-        Vec3f hitPoint = orig + dir * tnear;
-        Vec3f hitNormal;
-        Vec2f hitTexCoordinates;
-        hitObject->getSurfaceProperties(hitPoint, dir, index, uv, hitNormal, hitTexCoordinates);
-        float NdotView = std::max(0.f, hitNormal.dotProduct(-dir));
+    
+    if (
+        trace(orig, dir, objects, tnear, index, uv, &hitObject)
+    ) {
+        gvec<float> hitPoint = orig + dir * tnear;
+        gvec<float> hitNormal;//3
+        gvec<float> hitTexCoordinates;//2
+        //std::cerr<<"\nIT DID IT: "<<index<<std::endl;
+        hitObject->getSurfaceProperties (
+            hitPoint, 
+            dir, 
+            index, 
+            uv, 
+            hitNormal, 
+            hitTexCoordinates
+        );
+        
+        float NdotView = std::max(0.f, hitNormal*(-dir));
         const int M = 10;
-        float checker = (fmod(hitTexCoordinates.x * M, 1.0) > 0.5) ^ (fmod(hitTexCoordinates.y * M, 1.0) < 0.5);
+        float checker = (fmod(hitTexCoordinates[0] * M, 1.0) > 0.5) ^ (fmod(hitTexCoordinates[1] * M, 1.0) < 0.5);
         float c = 0.3 * (1 - checker) + 0.7 * checker;
         
         hitColor = c * NdotView; //Vec3f(uv.x, uv.y, 0);
     }
-
-    return hitColor;
+    buff color;
+    color.x=hitColor[0];
+    color.y=hitColor[1];
+    color.z=hitColor[2];
+    return color;//hitColor;
 }
 
 
@@ -112,21 +136,37 @@ void render(
     const std::vector<std::unique_ptr<Object>> &objects,
     const uint32_t &frame)
 {
-    std::unique_ptr<Vec3f []> framebuffer(new Vec3f[options.width * options.height]);
-    Vec3f *pix = framebuffer.get();
+    std::unique_ptr<buff[]>  framebuffer(new buff  [options.width * options.height]); //std::unique_ptr<buff[]> 
+    std::unique_ptr<float[]> depthbuffer(new float [options.width * options.height]); //std::unique_ptr<float[]>
+    
+    for (uint32_t i = 0; i < options.width * options.height; ++i) 
+            depthbuffer[i] = INT32_MAX; 
+    
+    buff *pix = framebuffer.get();
+
     float scale = tan(deg2rad(options.fov * 0.5));
     float imageAspectRatio = options.width / (float)options.height;
-    Vec3f orig;
-    options.cameraToWorld.multVecMatrix(Vec3f(0), orig);
+    
+    gvec<float> orig(1,4);
+                orig[3]=1;
+    orig=orig*options.cameraToWorld;
+    gvec<float> dir(1,4);
+
     auto timeStart = std::chrono::high_resolution_clock::now();
-    for (uint32_t j = 0; j < options.height; ++j) {
-        for (uint32_t i = 0; i < options.width; ++i) {
+    
+    for (uint32_t j = 0; j < options.height; ++j) 
+    { 
+        for (uint32_t i = 0; i < options.width; ++i) 
+        {
             // generate primary ray direction
-            float x = (2 * (i + 0.5) / (float)options.width - 1) * imageAspectRatio * scale;
-            float y = (1 - 2 * (j + 0.5) / (float)options.height) * scale;
-            Vec3f dir;
-            options.cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
+            dir[0] = (2 * (i + 0.5) / (float)options.width - 1) * imageAspectRatio * scale;
+            dir[1] = (1 - 2 * (j + 0.5) / (float)options.height) * scale;
+            dir[2] = -1;
+            
+            dir=dir*options.cameraToWorld;
             dir.normalize();
+            //options.cameraToWorld.multDirMatrix(Vec3f(x, y, -1), dir);
+            
             *(pix++) = castRay(orig, dir, objects, options);
         }
         fprintf(stderr, "\r%3d%c", uint32_t(j / (float)options.height * 100), '%');
