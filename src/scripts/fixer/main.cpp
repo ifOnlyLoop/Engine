@@ -11,6 +11,7 @@
 #include "../../graphics/raster/Camera.hpp"
 #include "./src/object/handleObject.h"
 #include "../../graphics/image/Texture.hpp"
+#include "../../graphics/image/imgppm.h"
 
 using namespace std;
 
@@ -38,9 +39,9 @@ imageHeight = 512*fact;
 
 int main(int argc, char **argv)
 {   
-    
-    Texture  texture ("/home/oo/iOL/Engine/src/scripts/fixer/tests/test0.bmp");
-    handleObject obj ("/home/oo/iOL/Engine/src/scripts/fixer/tests/test0.obj");
+    //Texture texture("/home/oo/iOL/Engine/src/scripts/fixer/tests/test0.bmp");
+    imgppm img = read("/home/oo/iOL/Engine/src/scripts/fixer/tests/text0.ppm");
+    handleObject obj ("/home/oo/iOL/Engine/src/scripts/fixer/tests/test2.obj");
 
     // SET CAMERA TRANSFORM IN FRONT OF OBJECT 
     float 
@@ -155,8 +156,9 @@ int main(int argc, char **argv)
             // ?
             st *= z;
             
-            float R=st[0],B=st[1],G=0;
-            texture.getColor(R,G,B); 
+            float R=st[0],G=st[1],B=0;
+            getColor(img,R,G,B);
+            //texture.getColor(R,G,B); 
             
             // transform original to camera (NO PROJECTION)
             gvec<float> v0Cam(v0*world2camera), 
@@ -177,14 +179,14 @@ int main(int argc, char **argv)
             float test = N*viewDirection;
             float nDotView =  std::max(0.f, test);//(N*viewDirection.transpose())[0]); 
             // square texture 
-            const int M = 5; // grids
-            float checker = (fmod(st[0] * M, 1.0) > 0.5) ^ (fmod(st[1] * M, 1.0) < 0.5); 
-            float c = 0.3 * (1 - checker) + 0.7 * checker; 
-            nDotView *= c; 
+            //const int M = 5; // grids
+            //float checker = (fmod(st[0] * M, 1.0) > 0.5) ^ (fmod(st[1] * M, 1.0) < 0.5); 
+            //float c = 0.3 * (1 - checker) + 0.7 * checker; 
+            //nDotView *= c; 
             
-            frameBuffer[y * imageWidth + x].x = nDotView *200;//R; 
-            frameBuffer[y * imageWidth + x].y = nDotView *200;//G; 
-            frameBuffer[y * imageWidth + x].z = nDotView *200;//B;  
+            frameBuffer[y * imageWidth + x].x = nDotView *(R*255);//0<R<1; 
+            frameBuffer[y * imageWidth + x].y = nDotView *(G*255);//0<G<1; 
+            frameBuffer[y * imageWidth + x].z = nDotView *(B*255);//0<B<1;  
             //}}
         } 
     }
